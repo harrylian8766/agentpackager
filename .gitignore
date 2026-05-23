@@ -141,3 +141,13 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
+
+# AgentPackager specific
+# Internal docs (not for public repo)
+docs/
+
+# Generated test output
+test-dist/
+
+# Build output
+*.js.map
