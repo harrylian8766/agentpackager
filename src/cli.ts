@@ -13,6 +13,7 @@ import { generateRestAPI } from "./generators/rest.js";
 import { generateMCPServer } from "./generators/mcp.js";
 import { generateDocker } from "./generators/docker.js";
 import { generateWebSocket } from "./generators/ws.js";
+import { generateWebhook } from "./generators/webhook.js";
 
 const PKG = JSON.parse(readFileSync(join(import.meta.dirname, "../../package.json"), "utf-8"));
 const VERSION: string = PKG.version;
@@ -221,8 +222,7 @@ async function cmdBuild(manifestFile: string, outputDir: string) {
     console.log(`  📦 WebSocket       → skipped (not enabled)`);
   }
   if (protocols.webhook?.enabled) {
-    console.log(`  📦 Webhook         → ${outputDir}/webhook/ (placeholder)`);
-    // TODO: Generate webhook handler
+    generateWebhook(manifest, outputDir);
   } else {
     console.log(`  📦 Webhook         → skipped (not enabled)`);
   }

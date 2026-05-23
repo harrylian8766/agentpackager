@@ -133,7 +133,8 @@ export interface WebSocketConfig {
 
 export interface WebhookConfig {
   enabled?: boolean;
-  path?: string;
+  basePath?: string;
+  secretHeader?: string;
   events?: string[];
 }
 

@@ -69,6 +69,10 @@ protocols:
   websocket:
     enabled: true
     path: /ws
+  webhook:
+    enabled: true
+    basePath: /webhooks
+    secretHeader: X-Webhook-Secret
 
 platforms:
   aiPair:
