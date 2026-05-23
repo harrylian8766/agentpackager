@@ -4,11 +4,12 @@
  * Package your AI agent's capabilities into secure, multi-protocol service interfaces.
  */
 
-import { readFileSync, existsSync } from "node:fs";
+import { readFileSync, existsSync, mkdirSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { parseArgs } from "node:util";
 import YAML from "yaml";
 import { ManifestValidator } from "./core/validator.js";
+import { generateRestAPI } from "./generators/rest.js";
 
 const PKG = JSON.parse(readFileSync(join(import.meta.dirname, "../package.json"), "utf-8"));
 const VERSION: string = PKG.version;
@@ -59,7 +60,8 @@ async function main() {
   }
 
   const command = positionals[0];
-  const manifestFile = values.file || "./agent.yml";
+  // Support positional file arg OR --file flag
+  const manifestFile = values.file || (positionals[1] ? positionals[1] : "./agent.yml");
   const outputDir = values.output || "./dist";
 
   switch (command) {
@@ -199,29 +201,29 @@ async function cmdBuild(manifestFile: string, outputDir: string) {
     process.exit(1);
   }
 
+  mkdirSync(outputDir, { recursive: true });
   console.log(`  Generating protocol interfaces...\n`);
 
   const protocols = manifest.protocols || {};
 
   if (protocols.rest?.enabled !== false) {
-    console.log(`  📦 REST API        → ${outputDir}/rest/`);
-    // TODO: Generate Express/FastAPI code
+    generateRestAPI(manifest, outputDir);
   }
   if (protocols.mcp?.enabled !== false) {
-    console.log(`  📦 MCP Server      → ${outputDir}/mcp/`);
-    // TODO: Generate @modelcontextprotocol/sdk server
+    console.log(`  📦 MCP Server      → ${outputDir}/mcp/ (placeholder)`);
+    // TODO: Generate MCP Server
   }
   if (protocols.websocket?.enabled) {
-    console.log(`  📦 WebSocket       → ${outputDir}/ws/`);
+    console.log(`  📦 WebSocket       → ${outputDir}/ws/ (placeholder)`);
     // TODO: Generate WS handler
   }
   if (protocols.webhook?.enabled) {
-    console.log(`  📦 Webhook         → ${outputDir}/webhook/`);
+    console.log(`  📦 Webhook         → ${outputDir}/webhook/ (placeholder)`);
     // TODO: Generate webhook handler
   }
 
   console.log(`\n  ✅ Build complete. See ${outputDir}/`);
-  console.log(`  Next: agentpackager serve --file ${manifestFile}\n`);
+  console.log(`  Next: cd ${outputDir}/rest && npm install && npm run dev\n`);
 }
 
 async function cmdServe(manifestFile: string) {

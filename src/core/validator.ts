@@ -6,23 +6,22 @@ import { AgentManifest, ValidationResult, ValidationError } from "./types.js";
 const SCHEMA_PATH = new URL("../../schemas/agent-manifest-v1.json", import.meta.url);
 
 export class ManifestValidator {
-  private ajv: Ajv;
-  private validate: ReturnType<Ajv["compile"]>;
+  private compiledValidate: any;
 
   constructor() {
-    this.ajv = new Ajv({ allErrors: true, strict: false });
-    addFormats(this.ajv);
+    const ajv = new (Ajv as any)({ allErrors: true, strict: false });
+    (addFormats as any)(ajv);
 
     const schema = JSON.parse(readFileSync(SCHEMA_PATH, "utf-8"));
-    this.validate = this.ajv.compile(schema);
+    this.compiledValidate = ajv.compile(schema);
   }
 
   validate(manifest: unknown): ValidationResult {
-    const valid = this.validate(manifest) as boolean;
+    const valid = this.compiledValidate(manifest) as boolean;
     const errors: ValidationError[] = [];
 
-    if (!valid && this.validate.errors) {
-      for (const err of this.validate.errors) {
+    if (!valid && this.compiledValidate.errors) {
+      for (const err of this.compiledValidate.errors) {
         const path = err.instancePath || "/";
         errors.push({
           path,

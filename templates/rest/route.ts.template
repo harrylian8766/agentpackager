@@ -1,0 +1,26 @@
+// Capability: {{capabilityId}}
+// {{capabilityDescription}}
+
+app.post("{{basePath}}{{routePath}}", async (req, res) => {
+  try {
+    const input: {{inputInterface}} = req.body;
+
+    // TODO: Implement your agent logic here
+    // This is a placeholder — replace with your actual implementation
+    const output = await {{handlerName}}(input);
+
+    res.json(output);
+  } catch (err: any) {
+    res.status(400).json({ error: err.message || "Bad request" });
+  }
+});
+
+/**
+ * {{capabilityName}} handler
+ */
+async function {{handlerName}}(input: {{inputInterface}}): Promise<{{outputInterface}}> {
+  // TODO: Replace this placeholder with your actual implementation
+  return {
+{{outputExample}}
+  };
+}

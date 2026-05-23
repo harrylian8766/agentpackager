@@ -1,0 +1,41 @@
+import express from "express";
+import cors from "cors";
+import { {{imports}} } from "./capabilities.js";
+
+const app = express();
+app.use(express.json());
+
+// CORS
+app.use(cors({
+  origin: {{allowedOrigins}},
+  methods: ["GET", "POST"],
+  allowedHeaders: ["Content-Type", "Authorization"]
+}));
+
+// Health check
+app.get("/health", (_req, res) => {
+  res.json({ status: "ok", agent: "{{agentName}}", version: "{{version}}" });
+});
+
+// API info
+app.get("{{basePath}}", (_req, res) => {
+  res.json({
+    name: "{{agentName}}",
+    version: "{{version}}",
+    description: "{{description}}",
+    capabilities: [{{capabilitiesList}}]
+  });
+});
+
+{{routes}}
+
+// Error handler
+app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  console.error(err);
+  res.status(500).json({ error: err.message });
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`🚀 {{agentName}} REST API running on http://localhost:${PORT}{{basePath}}`);
+});
