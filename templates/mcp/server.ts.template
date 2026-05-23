@@ -6,12 +6,50 @@ import {
   Tool,
 } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
+import { readdirSync, existsSync } from "node:fs";
+import { join } from "node:path";
 
 /**
  * {{agentName}} MCP Server
  * Version: {{version}}
  * {{description}}
  */
+
+// ── Capability Auto-Discovery ────────────────────────────────────────────
+// Place your implementations in src/capabilities/{toolName}.ts
+// Each file must export a default async function.
+
+const capabilityHandlers: Record<string, Function> = {};
+
+async function loadCapability(id: string): Promise<Function | null> {
+  const paths = [
+    join(process.cwd(), "src", "capabilities", `${id}.ts`),
+    join(process.cwd(), "src", "capabilities", `${id}.js`),
+    join(process.cwd(), "dist", "capabilities", `${id}.js`),
+  ];
+  for (const p of paths) {
+    if (!existsSync(p)) continue;
+    try {
+      const mod = await import(p);
+      return mod.default || mod.handler || null;
+    } catch { /* ignore */ }
+  }
+  return null;
+}
+
+async function preloadCapabilities() {
+  const capDir = join(process.cwd(), "src", "capabilities");
+  if (!existsSync(capDir)) return;
+  const files = readdirSync(capDir).filter(f => f.endsWith(".ts") || f.endsWith(".js"));
+  for (const file of files) {
+    const id = file.replace(/\.(ts|js)$/, "");
+    const handler = await loadCapability(id);
+    if (handler) {
+      capabilityHandlers[id] = handler;
+      console.error(`  ✓ capability loaded: ${id}`);
+    }
+  }
+}
 
 const server = new Server(
   {
@@ -44,6 +82,21 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
   const { name, arguments: args } = request.params;
 
+  // Check if user has implemented a real handler
+  const userHandler = capabilityHandlers[name];
+  if (userHandler) {
+    const result = await userHandler(args);
+    return {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify(result, null, 2),
+        },
+      ],
+    };
+  }
+
+  // Fall back to generated stub
   switch (name) {
 {{handlerMap}}
     default:
@@ -54,6 +107,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 // ── Start Server ───────────────────────────────────────────────────────────
 
 async function main() {
+  await preloadCapabilities();
+  console.error(`[agent] loaded capabilities: ${Object.keys(capabilityHandlers).join(", ") || "none (using stubs)"}`);
+
   const transport = new StdioServerTransport();
   await server.connect(transport);
   console.error("{{serverName}} MCP server running on stdio");
