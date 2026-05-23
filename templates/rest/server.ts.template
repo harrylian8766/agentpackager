@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
-import { {{imports}} } from "./capabilities.js";
+import { readdirSync, existsSync } from "node:fs";
+import { join } from "node:path";
 
 const app = express();
 app.use(express.json());
@@ -12,30 +13,76 @@ app.use(cors({
   allowedHeaders: ["Content-Type", "Authorization"]
 }));
 
-// Health check
+// ── Capability Auto-Discovery ────────────────────────────────────────────
+// Place your implementations in src/capabilities/{capabilityId}.ts
+// Each file must export a default async function.
+
+const capabilityHandlers: Record<string, Function> = {};
+
+async function loadCapability(id: string): Promise<Function | null> {
+  const paths = [
+    join(process.cwd(), "src", "capabilities", `${id}.ts`),
+    join(process.cwd(), "src", "capabilities", `${id}.js`),
+    join(process.cwd(), "dist", "capabilities", `${id}.js`),
+  ];
+  for (const p of paths) {
+    if (!existsSync(p)) continue;
+    try {
+      const mod = await import(p);
+      return mod.default || mod.handler || null;
+    } catch { /* ignore */ }
+  }
+  return null;
+}
+
+async function preloadCapabilities() {
+  const capDir = join(process.cwd(), "src", "capabilities");
+  if (!existsSync(capDir)) return;
+  const files = readdirSync(capDir).filter(f => f.endsWith(".ts") || f.endsWith(".js"));
+  for (const file of files) {
+    const id = file.replace(/\.(ts|js)$/, "");
+    const handler = await loadCapability(id);
+    if (handler) {
+      capabilityHandlers[id] = handler;
+      console.log(`  ✓ capability loaded: ${id}`);
+    }
+  }
+}
+
+// ── Health check ───────────────────────────────────────────────────────────
+
 app.get("/health", (_req, res) => {
-  res.json({ status: "ok", agent: "{{agentName}}", version: "{{version}}" });
+  res.json({ status: "ok", agent: "{{agentName}}", version: "{{version}}", loaded: Object.keys(capabilityHandlers) });
 });
 
-// API info
+// ── API info ────────────────────────────────────────────────────────────────
+
 app.get("{{basePath}}", (_req, res) => {
   res.json({
     name: "{{agentName}}",
     version: "{{version}}",
     description: "{{description}}",
-    capabilities: [{{capabilitiesList}}]
+    capabilities: [{{capabilitiesList}}],
+    loaded: Object.keys(capabilityHandlers)
   });
 });
 
 {{routes}}
 
-// Error handler
+// ── Error handler ─────────────────────────────────────────────────────────
+
 app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error(err);
   res.status(500).json({ error: err.message });
 });
 
+// ── Start ──────────────────────────────────────────────────────────────────
+
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`🚀 {{agentName}} REST API running on http://localhost:${PORT}{{basePath}}`);
+
+preloadCapabilities().then(() => {
+  app.listen(PORT, () => {
+    console.log(`🚀 {{agentName}} REST API running on http://localhost:${PORT}{{basePath}}`);
+    console.log(`   Loaded capabilities: ${Object.keys(capabilityHandlers).join(", ") || "none (using stubs)"}`);
+  });
 });

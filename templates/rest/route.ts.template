@@ -1,13 +1,18 @@
-// Capability: {{capabilityId}}
-// {{capabilityDescription}}
+// Route: {{capabilityId}} — {{capabilityDescription}}
+// POST {{basePath}}{{routePath}}
 
 app.post("{{basePath}}{{routePath}}", async (req, res) => {
   try {
     const input: {{inputInterface}} = req.body;
+    const handler = capabilityHandlers["{{capabilityId}}"];
 
-    // TODO: Implement your agent logic here
-    // This is a placeholder — replace with your actual implementation
-    const output = await {{handlerName}}(input);
+    let output: {{outputInterface}};
+    if (handler) {
+      output = await handler(input);
+    } else {
+      // Fallback stub — implement in src/capabilities/{{capabilityId}}.ts
+      output = await {{handlerName}}Stub(input);
+    }
 
     res.json(output);
   } catch (err: any) {
@@ -16,10 +21,12 @@ app.post("{{basePath}}{{routePath}}", async (req, res) => {
 });
 
 /**
- * {{capabilityName}} handler
+ * {{capabilityName}} — fallback stub
+ * Implement the real logic in: src/capabilities/{{capabilityId}}.ts
+ * Export: export default async function(input) { ... }
  */
-async function {{handlerName}}(input: {{inputInterface}}): Promise<{{outputInterface}}> {
-  // TODO: Replace this placeholder with your actual implementation
+async function {{handlerName}}Stub(input: {{inputInterface}}): Promise<{{outputInterface}}> {
+  console.warn(`[stub] {{capabilityId}} — implement in src/capabilities/{{capabilityId}}.ts`);
   return {
 {{outputExample}}
   };

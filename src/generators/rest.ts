@@ -11,7 +11,6 @@ export function generateRestAPI(manifest: AgentManifest, outputDir: string): voi
   mkdirSync(routesDir, { recursive: true });
 
   // Generate capability handlers
-  const imports: string[] = [];
   const routes: string[] = [];
   const interfaces: string[] = [];
   const capabilitiesList: string[] = [];
@@ -23,7 +22,6 @@ export function generateRestAPI(manifest: AgentManifest, outputDir: string): voi
     const inputInterface = `${capCamel}Input`;
     const outputInterface = `${capCamel}Output`;
 
-    imports.push(capCamel);
     capabilitiesList.push(`"${capId}"`);
 
     // Generate TypeScript interfaces
@@ -64,7 +62,6 @@ export function generateRestAPI(manifest: AgentManifest, outputDir: string): voi
     basePath: manifest.protocols?.rest?.basePath || "/api/v1",
     allowedOrigins,
     capabilitiesList: capabilitiesList.join(", "),
-    imports: imports.join(", "),
     routes: routes.join("\n\n"),
   });
 
@@ -92,11 +89,37 @@ export function generateRestAPI(manifest: AgentManifest, outputDir: string): voi
   const readmeCode = generateReadme(manifest);
   writeFileSync(join(routesDir, "README.md"), readmeCode);
 
+  // Generate capability stub example
+  const stubCode = generateCapabilityStub(manifest);
+  writeFileSync(join(routesDir, "capability.example.ts"), stubCode);
+
   console.log(`  ✅ REST API generated in ${routesDir}/`);
   console.log(`     • server.ts — Express app with ${manifest.capabilities.length} routes`);
   console.log(`     • types.ts — TypeScript interfaces`);
   console.log(`     • package.json — dependencies`);
   console.log(`     • README.md — usage instructions`);
+  console.log(`     • capability.example.ts — example implementation`);
+}
+
+function generateCapabilityStub(manifest: AgentManifest): string {
+  const stubs: string[] = [];
+  
+  for (const cap of manifest.capabilities) {
+    const capCamel = toCamelCase(cap.id);
+    const exampleOutput = generateExample(cap.outputSchema);
+    
+    stubs.push(`// src/capabilities/${cap.id}.ts
+// ${cap.description || cap.name}
+
+export default async function ${capCamel}(input: any): Promise<any> {
+  // TODO: Implement your business logic here
+  // This is a placeholder — replace with your actual implementation
+
+  return ${JSON.stringify(exampleOutput, null, 2)};
+}`);
+  }
+
+  return stubs.join("\n\n");
 }
 
 function generateReadme(manifest: AgentManifest): string {
@@ -120,6 +143,20 @@ npm run dev
 \`\`\`
 
 Server starts on http://localhost:3000
+
+## Implement Your Capabilities
+
+1. Copy \`capability.example.ts\` to your project
+2. Place implementations in \`src/capabilities/{capabilityId}.ts\`
+3. Each file must export a default async function
+
+Example:
+\`\`\`typescript
+// src/capabilities/greet.ts
+export default async function greet(input: { name?: string }) {
+  return { message: "Hello, " + (input.name || "World") + "!" };
+}
+\`\`\`
 
 ## API Endpoints
 
