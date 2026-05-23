@@ -14,6 +14,7 @@ import { generateMCPServer } from "./generators/mcp.js";
 import { generateDocker } from "./generators/docker.js";
 import { generateWebSocket } from "./generators/ws.js";
 import { generateWebhook } from "./generators/webhook.js";
+import { runDoctor } from "./commands/doctor.js";
 
 const PKG = JSON.parse(readFileSync(join(import.meta.dirname, "../../package.json"), "utf-8"));
 const VERSION: string = PKG.version;
@@ -25,6 +26,7 @@ Commands:
   init [name]            Initialize a new agent project
   validate [file]          Validate agent.yml manifest
   build [file]             Generate multi-protocol interfaces
+  doctor [file]            Diagnose environment and manifest health
   serve [file]             Run local gateway server
   publish [file]           Publish to AI Pair platform
 
@@ -37,8 +39,13 @@ Options:
 Examples:
   agentpackager init my-agent
   agentpackager validate
+  agentpackager doctor              # Check environment
   agentpackager build --output ./dist
   agentpackager serve --file ./agent.yml
+  
+Environment Check:
+  agentpackager doctor              # Diagnose Node.js, deps, manifest
+  agentpackager doctor --file agent.yml  # Also check manifest health
 `;
 
 async function main() {
@@ -80,6 +87,10 @@ async function main() {
     }
     case "build": {
       await cmdBuild(manifestFile, outputDir);
+      break;
+    }
+    case "doctor": {
+      await runDoctor(manifestFile);
       break;
     }
     case "serve": {
