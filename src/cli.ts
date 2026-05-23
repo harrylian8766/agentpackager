@@ -11,6 +11,7 @@ import YAML from "yaml";
 import { ManifestValidator } from "./core/validator.js";
 import { generateRestAPI } from "./generators/rest.js";
 import { generateMCPServer } from "./generators/mcp.js";
+import { generateDocker } from "./generators/docker.js";
 
 const PKG = JSON.parse(readFileSync(join(import.meta.dirname, "../package.json"), "utf-8"));
 const VERSION: string = PKG.version;
@@ -221,6 +222,9 @@ async function cmdBuild(manifestFile: string, outputDir: string) {
     console.log(`  📦 Webhook         → ${outputDir}/webhook/ (placeholder)`);
     // TODO: Generate webhook handler
   }
+  
+  // Always generate Docker packaging
+  generateDocker(manifest, outputDir);
 
   console.log(`\n  ✅ Build complete. See ${outputDir}/`);
   console.log(`  Next: cd ${outputDir}/rest && npm install && npm run dev\n`);
