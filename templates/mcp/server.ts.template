@@ -1,0 +1,65 @@
+import { Server } from "@modelcontextprotocol/sdk/server/index.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import {
+  CallToolRequestSchema,
+  ListToolsRequestSchema,
+  Tool,
+} from "@modelcontextprotocol/sdk/types.js";
+import { z } from "zod";
+
+/**
+ * {{agentName}} MCP Server
+ * Version: {{version}}
+ * {{description}}
+ */
+
+const server = new Server(
+  {
+    name: "{{serverName}}",
+    version: "{{version}}",
+  },
+  {
+    capabilities: {
+      tools: {},
+    },
+  }
+);
+
+// ── Tool Definitions ───────────────────────────────────────────────────────
+
+const tools: Tool[] = [
+  {{tools}}
+];
+
+// ── Tool Handlers ──────────────────────────────────────────────────────────
+
+{{handlers}}
+
+// ── Request Handlers ───────────────────────────────────────────────────────
+
+server.setRequestHandler(ListToolsRequestSchema, async () => {
+  return { tools };
+});
+
+server.setRequestHandler(CallToolRequestSchema, async (request) => {
+  const { name, arguments: args } = request.params;
+
+  switch (name) {
+{{handlerMap}}
+    default:
+      throw new Error(`Unknown tool: ${name}`);
+  }
+});
+
+// ── Start Server ───────────────────────────────────────────────────────────
+
+async function main() {
+  const transport = new StdioServerTransport();
+  await server.connect(transport);
+  console.error("{{serverName}} MCP server running on stdio");
+}
+
+main().catch((error) => {
+  console.error("Fatal error:", error);
+  process.exit(1);
+});

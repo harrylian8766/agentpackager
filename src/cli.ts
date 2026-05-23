@@ -10,6 +10,7 @@ import { parseArgs } from "node:util";
 import YAML from "yaml";
 import { ManifestValidator } from "./core/validator.js";
 import { generateRestAPI } from "./generators/rest.js";
+import { generateMCPServer } from "./generators/mcp.js";
 
 const PKG = JSON.parse(readFileSync(join(import.meta.dirname, "../package.json"), "utf-8"));
 const VERSION: string = PKG.version;
@@ -210,8 +211,7 @@ async function cmdBuild(manifestFile: string, outputDir: string) {
     generateRestAPI(manifest, outputDir);
   }
   if (protocols.mcp?.enabled !== false) {
-    console.log(`  📦 MCP Server      → ${outputDir}/mcp/ (placeholder)`);
-    // TODO: Generate MCP Server
+    generateMCPServer(manifest, outputDir);
   }
   if (protocols.websocket?.enabled) {
     console.log(`  📦 WebSocket       → ${outputDir}/ws/ (placeholder)`);

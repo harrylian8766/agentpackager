@@ -5,10 +5,10 @@ import { fileURLToPath } from "node:url";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 /**
- * Load a template file and replace placeholders
+ * Load a template file from a specific template directory
  */
-export function loadTemplate(name: string, replacements: Record<string, string>): string {
-  const templatePath = join(__dirname, "../../templates/rest", name);
+export function loadTemplate(name: string, replacements: Record<string, string>, subdir: string = "rest"): string {
+  const templatePath = join(__dirname, "../../templates", subdir, name);
   let content = readFileSync(templatePath, "utf-8");
 
   for (const [key, value] of Object.entries(replacements)) {
