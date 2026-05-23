@@ -1,0 +1,72 @@
+name: hello-world
+version: "1.0.0"
+description: "A minimal example to get started with AgentPackager"
+displayName: "Hello World"
+author:
+  name: "Your Name"
+  email: "you@example.com"
+
+capabilities:
+  - id: greet
+    name: Greet
+    description: Say hello to someone
+    inputSchema:
+      type: object
+      properties:
+        name:
+          type: string
+          description: "Who to greet"
+          default: "World"
+      required: []
+    outputSchema:
+      type: object
+      properties:
+        message:
+          type: string
+      required: [message]
+    examples:
+      - input:
+          name: "AgentPackager"
+        output:
+          message: "Hello, AgentPackager!"
+
+  - id: echo
+    name: Echo
+    description: Echo back whatever you send
+    inputSchema:
+      type: object
+      properties:
+        text:
+          type: string
+          description: "Text to echo"
+      required: [text]
+    outputSchema:
+      type: object
+      properties:
+        echoed:
+          type: string
+      required: [echoed]
+
+security:
+  sandbox:
+    type: docker
+    network: none
+    executionTimeout: 5s
+    maxMemory: 64MiB
+  rateLimit:
+    requestsPerMinute: 1000
+  dataProtection:
+    encryption: tls
+    piiRedaction: false
+
+protocols:
+  rest:
+    enabled: true
+    basePath: /api/v1
+  mcp:
+    enabled: true
+    transport: stdio
+
+platforms:
+  aiPair:
+    enabled: false

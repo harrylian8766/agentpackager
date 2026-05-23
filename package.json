@@ -1,0 +1,59 @@
+{
+  "name": "agentpackager",
+  "version": "0.1.0",
+  "description": "Package your AI agent's capabilities into secure, multi-protocol service interfaces",
+  "type": "module",
+  "license": "MIT",
+  "author": "Harry Lian <harry@aistock.hk>",
+  "homepage": "https://github.com/harrylian8766/agentpackager",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/harrylian8766/agentpackager.git"
+  },
+  "bugs": {
+    "url": "https://github.com/harrylian8766/agentpackager/issues"
+  },
+  "keywords": [
+    "ai",
+    "agent",
+    "mcp",
+    "api",
+    "gateway",
+    "packaging",
+    "rest",
+    "websocket",
+    "webhook",
+    "a2a",
+    "agent-as-a-service"
+  ],
+  "bin": {
+    "agentpackager": "./dist/cli.js"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "schemas",
+    "templates"
+  ],
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "node --test dist/**/*.test.js",
+    "lint": "eslint src",
+    "format": "prettier --write src",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1",
+    "yaml": "^2.6.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.0"
+  }
+}

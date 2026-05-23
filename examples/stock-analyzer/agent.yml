@@ -1,0 +1,294 @@
+name: stock-analyzer
+version: "1.0.0"
+description: "A股底部启动分析助手 — 基于MACD道通模式识别低位放量启动机会"
+displayName: "道通股票分析师"
+author:
+  name: Harry
+  email: harry@example.com
+  url: https://aistock.hk
+icon: https://aistock.hk/logo.png
+license: MIT
+repository: https://github.com/harrylian8766/aistock-agent
+tags:
+  - stock-analysis
+  - macd
+  - bottom-fishing
+  - a-share
+  - daotong-pattern
+
+capabilities:
+  - id: analyze_stock
+    name: 单股分析
+    description: 输入股票代码，返回MACD道通模式分析和买入建议
+    inputSchema:
+      type: object
+      properties:
+        stock_code:
+          type: string
+          description: "A股代码，格式：sh600000 或 sz000001"
+          pattern: "^[sh|sz]{2}[0-9]{6}$"
+        detailed:
+          type: boolean
+          default: false
+          description: "是否返回详细技术指标"
+      required: [stock_code]
+    outputSchema:
+      type: object
+      properties:
+        stock_code:
+          type: string
+        stock_name:
+          type: string
+        score:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: "综合评分，满分100"
+        signal:
+          type: string
+          enum: ["buy", "hold", "watch", "avoid"]
+          description: "买入信号"
+        recommendation:
+          type: string
+          description: "文字建议"
+        macd:
+          type: object
+          properties:
+            dif:
+              type: number
+            dea:
+              type: number
+            macd_bar:
+              type: number
+            golden_cross_days:
+              type: integer
+              description: "金叉天数"
+        technical_indicators:
+          type: object
+          properties:
+            rsi_6:
+              type: number
+            rsi_12:
+              type: number
+            boll_upper:
+              type: number
+            boll_lower:
+              type: number
+            ma_convergence:
+              type: number
+              description: "均线收敛度%"
+            amplitude_15d:
+              type: number
+              description: "15日振幅%"
+        fundamentals:
+          type: object
+          properties:
+            pe_ttm:
+              type: number
+            pb:
+              type: number
+            roe:
+              type: number
+        risk:
+          type: object
+          properties:
+            stop_loss:
+              type: number
+              description: "建议止损价"
+            target_price:
+              type: number
+              description: "目标价"
+      required: [stock_code, stock_name, score, signal, recommendation]
+    examples:
+      - input:
+          stock_code: "sh600760"
+          detailed: true
+        output:
+          stock_code: "sh600760"
+          stock_name: "中航沈飞"
+          score: 85
+          signal: "buy"
+          recommendation: "MACD低位金叉7天，DIF持续上升，股价小跌压盘，符合道通模式，建议买入"
+          macd:
+            dif: -0.71
+            dea: -0.79
+            macd_bar: 0.16
+            golden_cross_days: 7
+          technical_indicators:
+            rsi_6: 35.2
+            rsi_12: 38.5
+            boll_upper: 52.1
+            boll_lower: 45.8
+            ma_convergence: 0.28
+            amplitude_15d: 7.2
+          fundamentals:
+            pe_ttm: 28.5
+            pb: 2.1
+            roe: 15.2
+          risk:
+            stop_loss: 46.0
+            target_price: 55.0
+
+  - id: scan_market
+    name: 全市场扫描
+    description: 扫描全市场符合道通模式的候选股
+    inputSchema:
+      type: object
+      properties:
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 500
+          default: 50
+          description: "返回数量"
+        min_score:
+          type: integer
+          minimum: 0
+          maximum: 100
+          default: 60
+          description: "最低评分"
+        sectors:
+          type: array
+          items:
+            type: string
+            enum: ["科技", "医药", "军工", "新能源", "消费", "金融", "全部"]
+          default: ["全部"]
+      required: []
+    outputSchema:
+      type: object
+      properties:
+        total_scanned:
+          type: integer
+        candidates:
+          type: array
+          items:
+            type: object
+            properties:
+              stock_code:
+                type: string
+              stock_name:
+                type: string
+              score:
+                type: integer
+              signal:
+                type: string
+                enum: ["buy", "hold", "watch"]
+              reason:
+                type: string
+        timestamp:
+          type: string
+          format: date-time
+      required: [total_scanned, candidates]
+    examples:
+      - input:
+          limit: 5
+          min_score: 70
+        output:
+          total_scanned: 5200
+          candidates:
+            - stock_code: "sh600760"
+              stock_name: "中航沈飞"
+              score: 85
+              signal: "buy"
+              reason: "均线收敛0.28%，DIF金叉7天，52W低位23.6%"
+          timestamp: "2026-05-23T10:00:00Z"
+
+  - id: get_market_overview
+    name: 大盘概览
+    description: 获取当日大盘指数和整体情绪
+    inputSchema:
+      type: object
+      properties: {}
+    outputSchema:
+      type: object
+      properties:
+        indices:
+          type: object
+          properties:
+            shanghai:
+              type: number
+            shenzhen:
+              type: number
+            chinext:
+              type: number
+        sentiment:
+          type: string
+          enum: ["strong_bull", "bull", "neutral", "bear", "strong_bear"]
+        advancers:
+          type: integer
+        decliners:
+          type: integer
+        volume_trillion:
+          type: number
+      required: [indices, sentiment]
+
+security:
+  sandbox:
+    type: docker
+    network: restricted
+    allowedDomains:
+      - qt.gtimg.cn
+      - api.kimi.com
+      - push2.eastmoney.com
+    filesystem: readonly
+    executionTimeout: 30s
+    maxMemory: 512MiB
+    maxCpu: 1
+  rateLimit:
+    requestsPerMinute: 60
+    requestsPerHour: 1000
+    concurrentRequests: 5
+  dataProtection:
+    inputLogging: false
+    outputLogging: true
+    piiRedaction: true
+    encryption: tls
+  authentication:
+    methods: [api_key, pairing]
+    apiKeyRotation: true
+    autoAcceptPairing: false
+
+runtime:
+  type: docker
+  image: aistock-agent:v1
+  command: "python main.py"
+  env:
+    - name: DATA_SOURCE
+      value: tencent
+    - name: ANALYSIS_MODEL
+      value: kimi-k2.6
+    - name: API_KEY
+      value: ${secrets.API_KEY}
+      secret: true
+  healthCheck:
+    path: /health
+    interval: 30s
+    timeout: 5s
+
+protocols:
+  rest:
+    enabled: true
+    basePath: /api/v1
+    cors:
+      enabled: true
+      allowedOrigins: ["*"]
+  mcp:
+    enabled: true
+    serverName: aistock-analyzer
+    transport: stdio
+  websocket:
+    enabled: true
+    path: /ws
+  webhook:
+    enabled: false
+
+platforms:
+  aiPair:
+    enabled: true
+    endpoint: https://aipair.ai/api/v1/agents
+  discord:
+    enabled: false
+  telegram:
+    enabled: false
+  feishu:
+    enabled: false
