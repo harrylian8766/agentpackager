@@ -27,7 +27,7 @@
     "agent-as-a-service"
   ],
   "bin": {
-    "agentpackager": "./dist/cli.js"
+    "agentpackager": "./dist/src/cli.js"
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -40,7 +40,7 @@
     "node": ">=20.0.0"
   },
   "scripts": {
-    "build": "tsc && cp -r schemas dist/",
+    "build": "tsc && cp -r schemas dist/ && cp -r templates dist/",
     "dev": "tsc --watch",
     "test": "npm run build && node --test dist/tests/**/*.test.js",
     "lint": "eslint src",

@@ -66,6 +66,9 @@ protocols:
   mcp:
     enabled: true
     transport: stdio
+  websocket:
+    enabled: true
+    path: /ws
 
 platforms:
   aiPair:

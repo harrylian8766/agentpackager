@@ -12,8 +12,9 @@ import { ManifestValidator } from "./core/validator.js";
 import { generateRestAPI } from "./generators/rest.js";
 import { generateMCPServer } from "./generators/mcp.js";
 import { generateDocker } from "./generators/docker.js";
+import { generateWebSocket } from "./generators/ws.js";
 
-const PKG = JSON.parse(readFileSync(join(import.meta.dirname, "../package.json"), "utf-8"));
+const PKG = JSON.parse(readFileSync(join(import.meta.dirname, "../../package.json"), "utf-8"));
 const VERSION: string = PKG.version;
 
 const HELP_TEXT = `
@@ -215,12 +216,15 @@ async function cmdBuild(manifestFile: string, outputDir: string) {
     generateMCPServer(manifest, outputDir);
   }
   if (protocols.websocket?.enabled) {
-    console.log(`  📦 WebSocket       → ${outputDir}/ws/ (placeholder)`);
-    // TODO: Generate WS handler
+    generateWebSocket(manifest, outputDir);
+  } else {
+    console.log(`  📦 WebSocket       → skipped (not enabled)`);
   }
   if (protocols.webhook?.enabled) {
     console.log(`  📦 Webhook         → ${outputDir}/webhook/ (placeholder)`);
     // TODO: Generate webhook handler
+  } else {
+    console.log(`  📦 Webhook         → skipped (not enabled)`);
   }
   
   // Always generate Docker packaging
